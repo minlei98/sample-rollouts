@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: nginx-rollout
+spec:
+  replicas: 1 # Fewer replicas for dev/test environment
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.23.4 # Specific image for int environment (e.g., a dev build)
+  strategy:
+    canary:
+      steps:
+        # Simple, fast rollout for int environment
+        - setWeight: 50
+        - pause: {duration: 15s}
+        - setWeight: 100
+        - analysis: # Add analysis to int for basic health check
+            templates:
+              - templateName: http-error-rate-check
+            args:
+              - name: namespace
+                value: my-app # Target namespace on int-cluster

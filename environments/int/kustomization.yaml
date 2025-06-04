@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base # Reference to the base directory
+patches:
+  - path: rollout-patch.yaml
+    target:
+      kind: Rollout
+      name: nginx-rollout

@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: nginx-rollout
+spec:
+  replicas: 2 # More replicas for stage
+  template:
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:1.24.0 # Specific image for stage environment (e.g., a release candidate)
+  strategy:
+    canary:
+      steps:
+        - setWeight: 20
+        - pause: {duration: 1m}
+        - analysis: # Initial analysis after 20% traffic
+            templates:
+              - templateName: http-error-rate-check
+            args:
+              - name: namespace
+                value: my-app # Target namespace on stage-cluster
+        - setWeight: 50
+        - pause: {duration: 2m}
+        - analysis: # Second analysis after 50% traffic
+            templates:
+              - templateName: http-error-rate-check
+            args:
+              - name: namespace
+                value: my-app
+        - setWeight: 100
+

@@ -1,0 +1,35 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: nginx-rollout
+  labels:
+    app: nginx-demo
+spec:
+  replicas: 3 # Default replica count, overridden by environments
+  selector:
+    matchLabels:
+      app: nginx-demo
+  template:
+    metadata:
+      labels:
+        app: nginx-demo
+        app.kubernetes.io/name: nginx-demo
+        app.kubernetes.io/instance: nginx-demo-instance
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest # Placeholder image, MUST be overridden by environments
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "20m"
+            limits:
+              memory: "64Mi"
+              cpu: "40m"
+  strategy:
+    canary:
+      steps:
+        # Default canary steps, typically overridden by environments
+        - setWeight: 100 # Default to full rollout, environments will define progressive steps

@@ -1,0 +1,26 @@
+# This AnalysisTemplate is based on your provided 'analysis-template-example'
+# It checks for HTTP 5xx error rates.
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: http-error-rate-check
+spec:
+  metrics:
+    - name: error-rate-check
+      interval: 10s # How often to run the query
+      failureLimit: 1 # Number of times a query can fail before the metric fails
+      successCondition: "result[0] < 0.01" # Fail if error rate is >= 1% (i.e., less than 1%)
+      provider:
+        prometheus:
+          # Adjust this address to your Prometheus service in OpenShift Monitoring
+          # This is a common default for OpenShift's built-in Prometheus
+          address: http://prometheus-k8s.openshift-monitoring.svc.cluster.local:9090
+          # Query to calculate 5xx error rate for the 'nginx-demo' job
+          query: |
+            sum(rate(http_requests_total{job="nginx-demo",status=~"5..",namespace="{{args.namespace}}"}[1m]))
+            /
+            sum(rate(http_requests_total{job="nginx-demo",namespace="{{args.namespace}}"}[1m]))
+          # Using args to make the query reusable across namespaces
+          args:
+            - name: namespace
+              value: "{{.Rollout.Namespace}}" # Dynamically get the rollout's namespace
